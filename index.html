@@ -10,9 +10,43 @@
 <link rel="preload" as="image" href="media/hero/leaf.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=11">
+<link rel="stylesheet" href="css/style.css?v=12">
+<style>
+.pre { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px; background: #f4eee4; transition: opacity .9s cubic-bezier(.22, .61, .36, 1), visibility .9s; }
+.pre.out { opacity: 0; visibility: hidden; }
+.pre img { width: 150px; animation: preBreath 2.4s ease-in-out infinite; }
+.pre i { width: 160px; height: 1px; background: rgba(31, 42, 36, .14); overflow: hidden; }
+.pre b { display: block; height: 100%; background: #1f2a24; transform-origin: left; transform: scaleX(.06); }
+@keyframes preBreath { 50% { opacity: .55; transform: scale(.97); } }
+.loading body { overflow: hidden; }
+.loading .hero [data-in], .loading .hero__media { animation-play-state: paused; }
+</style>
+<noscript><style>.pre { display: none; }</style></noscript>
 </head>
 <body>
+<div class="pre" id="pre" aria-hidden="true"><img src="img/logo.svg" alt=""><i><b id="preBar"></b></i></div>
+<script>
+/* Прелоадер: ждём картинку первого экрана и шрифты, не меньше 0,6 с и не дольше 4 с. Видео догружается уже после */
+(function () {
+  var html = document.documentElement, pre = document.getElementById('pre'), bar = document.getElementById('preBar');
+  html.classList.add('loading');
+  var t0 = Date.now(), shown = 0, real = 0, n = 0, total = 2, fin = false;
+  function step() { n++; real = n / total; if (n >= total) done(); }
+  function tick() { shown += (real - shown) * .1; bar.style.transform = 'scaleX(' + (.06 + shown * .94) + ')'; if (!fin) requestAnimationFrame(tick); }
+  function done() {
+    if (fin) return; real = 1;
+    setTimeout(function () { fin = true; bar.style.transform = 'scaleX(1)'; html.classList.remove('loading'); pre.classList.add('out'); setTimeout(function () { pre.remove(); }, 1000); }, Math.max(350, 600 - (Date.now() - t0)));
+  }
+  requestAnimationFrame(tick);
+  setTimeout(done, 4000);
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(step, step);
+  document.addEventListener('DOMContentLoaded', function () {
+    var im = document.getElementById('heroPoster');
+    if (!im || im.complete) return step();
+    im.addEventListener('load', step); im.addEventListener('error', step);
+  });
+})();
+</script>
 <a class="sr" href="#main">К содержанию</a>
 <div data-header></div>
 
@@ -176,8 +210,8 @@
 </main>
 
 <div data-footer></div>
-<script src="js/data.js?v=11"></script>
+<script src="js/data.js?v=12"></script>
 <script src="js/scroll_frames.js?v=2"></script>
-<script src="js/app.js?v=11"></script>
+<script src="js/app.js?v=12"></script>
 </body>
 </html>
