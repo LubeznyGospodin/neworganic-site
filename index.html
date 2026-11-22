@@ -7,10 +7,10 @@
 <title>New Organic · грибы и травы для ясной головы и спокойного сна</title>
 <meta name="description" content="Ежовик, кордицепс, рейши и ещё 80 грибов и трав. Чистый состав, курс под вашу цель и бесплатный куратор. Отправка за 48 часов.">
 <link rel="icon" href="img/logo.svg">
-<link rel="preload" as="image" href="media/hero/leaf.webp">
+<link rel="preload" as="image" href="media/hero/leaf.webp" media="(min-width: 821px)"><link rel="preload" as="image" href="media/hero/m/leaf.webp" media="(max-width: 820px)">
 <link rel="preload" as="font" type="font/woff2" href="fonts/InterTight-cyrillic-837888.woff2" crossorigin><link rel="preload" as="font" type="font/woff2" href="fonts/Jost-cyrillic-466e9f.woff2" crossorigin>
 <link rel="stylesheet" href="css/fonts.css?v=1">
-<link rel="stylesheet" href="css/style.css?v=13">
+<link rel="stylesheet" href="css/style.css?v=14">
 <style>
 .pre { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px; background: #f4eee4; transition: opacity .9s cubic-bezier(.22, .61, .36, 1), visibility .9s; }
 .pre.out { opacity: 0; visibility: hidden; }
@@ -54,10 +54,11 @@
 
   <section class="hero" id="hero">
     <div class="hero__media" aria-hidden="true">
-      <img id="heroPoster" src="media/hero/leaf.webp" alt="">
+      <picture><source media="(max-width: 820px)" srcset="media/hero/m/leaf.webp"><img id="heroPoster" src="media/hero/leaf.webp" alt=""></picture>
       <video id="heroVideo" muted loop playsinline preload="auto"></video>
       <video id="heroOpen" muted playsinline preload="none"></video>
       <video id="heroRest" muted loop playsinline preload="none"></video>
+      <img id="heroEnd" alt="">
       <div class="hero__sun" id="heroSun" aria-hidden="true"></div>
     </div>
     <canvas class="hero__motes" id="motes" aria-hidden="true"></canvas>
@@ -102,11 +103,11 @@
 
   <section class="story" id="story">
     <div class="story__media" id="storyMedia">
-      <img src="img/scene/forest.webp" alt="Ежовик на стволе берёзы в утреннем лесу" class="on">
-      <img src="img/scene/cordyceps.webp" alt="Кордицепс New Organic на камне" loading="lazy">
-      <img src="img/scene/ashwa.webp" alt="Ашваганда New Organic с корнями" loading="lazy">
-      <img src="img/scene/reishi.webp" alt="Рейши New Organic и чашка чая" loading="lazy">
-      <img src="img/scene/ritual.webp" alt="Стакан воды и капсулы ежовика" loading="lazy">
+      <img src="img/scene/s/forest.webp" srcset="img/scene/s/forest.webp 760w, img/scene/forest.webp 1450w" sizes="(max-width: 820px) 100vw, 50vw" alt="Ежовик на стволе берёзы в утреннем лесу" class="on">
+      <img src="img/scene/s/cordyceps.webp" srcset="img/scene/s/cordyceps.webp 760w, img/scene/cordyceps.webp 1450w" sizes="(max-width: 820px) 100vw, 50vw" alt="Кордицепс New Organic на камне" loading="lazy">
+      <img src="img/scene/s/ashwa.webp" srcset="img/scene/s/ashwa.webp 760w, img/scene/ashwa.webp 1450w" sizes="(max-width: 820px) 100vw, 50vw" alt="Ашваганда New Organic с корнями" loading="lazy">
+      <img src="img/scene/s/reishi.webp" srcset="img/scene/s/reishi.webp 760w, img/scene/reishi.webp 1450w" sizes="(max-width: 820px) 100vw, 50vw" alt="Рейши New Organic и чашка чая" loading="lazy">
+      <img src="img/scene/s/ritual.webp" srcset="img/scene/s/ritual.webp 760w, img/scene/ritual.webp 1450w" sizes="(max-width: 820px) 100vw, 50vw" alt="Стакан воды и капсулы ежовика" loading="lazy">
     </div>
     <div class="story__steps">
       <div class="step" data-step="0"><div class="label">Ежовик</div><h3>Начинается в лесу</h3><p>Ежовик растёт на старых берёзах. Мы выращиваем его грибницу на буром рисе и мелем вместе с зерном, поэтому в капсуле нет наполнителей.</p><a class="link" href="katalog.html?cat=ezhovik" target="_blank" rel="noopener">Ежовик в каталоге</a></div>
@@ -169,7 +170,7 @@
   </section>
 
   <section class="split" id="club">
-    <div class="split__img"><img src="img/scene/hero.webp" alt="Ежовик New Organic на травертине в утреннем свете" loading="lazy"></div>
+    <div class="split__img"><img src="img/scene/s/hero.webp" srcset="img/scene/s/hero.webp 760w, img/scene/hero.webp 1800w" sizes="(max-width: 820px) 100vw, 50vw" alt="Ежовик New Organic на травертине в утреннем свете" loading="lazy"></div>
     <div class="split__body">
       <div data-reveal><div class="label">Куратор и сообщество</div><h2 class="h2">Рядом на всём курсе</h2></div>
       <p data-reveal>Покупатели задали нам на Wildberries 2 374 вопроса. Пишите в Telegram: подскажем схему и сочетания. В сообществе несколько раз в год проходит бесплатный марафон по биохакингу.</p>
@@ -211,7 +212,7 @@
 
 <div data-footer></div>
 <script src="js/data.js?v=13"></script>
-<script src="js/scroll_frames.js?v=2"></script>
-<script src="js/app.js?v=14"></script>
+<script src="js/scroll_frames.js?v=3"></script>
+<script src="js/app.js?v=16"></script>
 </body>
 </html>

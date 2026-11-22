@@ -20,8 +20,9 @@ $('[data-header]').outerHTML = `
   <nav class="hbar__nav" aria-label="Меню">${[['katalog.html', 'Каталог'], ['podbor.html', 'Подбор курса'], ['o-kompanii.html', 'О компании'], ['dostavka.html', 'Доставка'], ['blog.html', 'Блог'], ['kontakty.html', 'Контакты']].map(([h, t]) => `<a href="${h}"${location.pathname.endsWith(h) ? ' class="on" aria-current="page"' : ''}>${t}</a>`).join('')}</nav>
   <button class="hbar__burger" type="button" id="burger" aria-expanded="false" aria-label="Меню"><i></i><i></i></button>
   <a class="hbar__logo" href="index.html" aria-label="New Organic, на главную"><img src="img/logo.svg" alt="New Organic"></a>
-  <div class="hbar__right"><a class="hbar__tel" href="tel:+79875432546">+7 987 543-25-46</a><button class="hbar__cart" type="button" id="cartBtn">Корзина (<span id="cartCount">0</span>)</button></div>
-</div></header>`;
+  <div class="hbar__right"><a class="hbar__tel" href="tel:+79875432546">+7 987 543-25-46</a><button class="hbar__cart" type="button" id="cartBtn" aria-label="Корзина"><svg class="bag" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg><span class="hbar__txt">Корзина (</span><span class="hbar__n" id="cartCount">0</span><span class="hbar__txt">)</span></button></div>
+</div></header>
+<div class="fab" id="fab"><button class="fab__menu" type="button" id="fabMenu" aria-label="Меню"><i></i><i></i></button><button class="fab__cart" type="button" id="fabCart" aria-label="Корзина"><svg class="bag" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg><span class="hbar__n" id="fabCount">0</span></button></div>`;
 $('[data-footer]').outerHTML = `
 <footer class="foot"><div class="wrap">
   <div class="foot__grid">
@@ -61,7 +62,7 @@ $('[data-footer]').outerHTML = `
 /* Карточка товара в сетке */
 const card = (p, big) => `
   <article class="pcard${inStock(p) ? '' : ' out'}" data-reveal>
-    <button class="pcard__img" type="button" data-open="${p.id}" aria-label="${p.name}, подробнее"><img src="${photo(p.id)}" alt="${p.name}, ${p.sub}" loading="lazy">${big && SCENE[p.id] ? `<img src="img/scene/${SCENE[p.id]}.webp" alt="" loading="lazy">` : ''}</button>
+    <button class="pcard__img" type="button" data-open="${p.id}" aria-label="${p.name}, подробнее"><img src="${photo(p.id)}" alt="${p.name}, ${p.sub}" loading="lazy">${big && SCENE[p.id] ? `<img src="img/scene/s/${SCENE[p.id]}.webp" srcset="img/scene/s/${SCENE[p.id]}.webp 760w, img/scene/${SCENE[p.id]}.webp 1450w" sizes="(max-width: 820px) 100vw, 34vw" alt="" loading="lazy">` : ''}</button>
     <div class="pcard__meta"><div><div class="pcard__name">${p.name}</div><div class="pcard__for">${big ? FOR[p.goals[0]] || p.sub : p.sub}</div></div><div class="pcard__price">${rub(p.price)}</div></div>
     <div class="pcard__actions"><span class="pcard__stock" style="--sc:${STOCK[p.stock] || '#3d5444'}">${inStock(p) ? 'В наличии' : 'Нет в наличии'}</span><button class="addtext" type="button" data-add="${p.id}" ${inStock(p) ? '' : 'disabled'}>${inStock(p) ? 'В корзину' : 'Ожидаем'}</button></div>
   </article>`;
@@ -78,11 +79,22 @@ function openModal(id) {
   const b = $('#mAdd'); b.disabled = !inStock(p); b.textContent = inStock(p) ? 'В корзину' : 'Ожидаем поставку';
   b.onclick = () => { add(id); close(); };
   modal.hidden = false; document.body.style.overflow = 'hidden';
+  $('.modal__box').scrollTop = 0; $('.modal__box').style.transform = '';
 }
 function close() { modal.hidden = true; drawer.hidden = true; document.body.style.overflow = ''; }
 $$('[data-close]').forEach(b => b.onclick = close);
 [modal, drawer].forEach(el => el.addEventListener('click', e => { if (e.target === el) close(); }));
 addEventListener('keydown', e => e.key === 'Escape' && close());
+// телефон: карточку можно смахнуть вниз, если она пролистана к самому верху
+{
+  const box = $('.modal__box'); let y0 = null, dy = 0;
+  box.addEventListener('touchstart', e => { y0 = box.scrollTop <= 0 ? e.touches[0].clientY : null; dy = 0; box.style.transition = 'none'; }, { passive: true });
+  box.addEventListener('touchmove', e => { if (y0 == null) return; dy = Math.max(0, e.touches[0].clientY - y0); if (dy > 0) box.style.transform = `translateY(${dy}px)`; }, { passive: true });
+  box.addEventListener('touchend', () => {
+    if (y0 == null) return; y0 = null; box.style.transition = 'transform .45s var(--soft)';
+    if (dy > 110) { box.style.transform = 'translateY(100%)'; setTimeout(close, 300); } else box.style.transform = '';
+  });
+}
 document.addEventListener('click', e => {
   const o = e.target.closest('[data-open]'), a = e.target.closest('[data-add]');
   if (o) openModal(+o.dataset.open);
@@ -101,7 +113,9 @@ function add(id, q = 1, quiet) {
 }
 function renderCart() {
   const ids = Object.keys(cart).map(Number).filter(byId), total = ids.reduce((s, id) => s + byId(id).price * cart[id], 0);
-  $('#cartCount').textContent = ids.reduce((s, id) => s + cart[id], 0);
+  const nItems = ids.reduce((s, id) => s + cart[id], 0);
+  $('#cartCount').textContent = $('#fabCount').textContent = nItems;
+  $('#hbar').classList.toggle('has-items', nItems > 0); $('#fab').classList.toggle('has-items', nItems > 0);
   $('#cartList').innerHTML = ids.length ? ids.map(id => { const p = byId(id); return `<div class="line"><img src="${photo(id)}" alt=""><div><b>${p.name}</b><small>${p.sub}, ${rub(p.price)}</small></div><div class="qty"><button type="button" data-q="${id}" data-d="-1" aria-label="Меньше">−</button>${cart[id]}<button type="button" data-q="${id}" data-d="1" aria-label="Больше">+</button></div></div>`; }).join('') : '<div class="empty">В корзине пока пусто</div>';
   $('#cartTotal').textContent = rub(total);
   const left = FREE - total;
@@ -128,6 +142,30 @@ $('#burger').onclick = () => { const o = hbar.classList.toggle('open'); $('#burg
 $$('.hbar__nav a').forEach(a => a.addEventListener('click', () => hbar.classList.remove('open')));
 const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .12, rootMargin: '0px 0px -6% 0px' });
 const reveal = () => $$('[data-reveal]:not(.in)').forEach(el => io.observe(el));
+
+/* Телефон: шапка уезжает вверх, пока листаете вниз, и возвращается при прокрутке вверх.
+   Вместо неё внизу справа плавает стеклянная капсула с меню и корзиной, место под контент освобождается */
+const mqPhone = matchMedia('(max-width: 820px)'); let lastY = scrollY;
+addEventListener('scroll', () => {
+  const y = scrollY; if (Math.abs(y - lastY) < 8) return;
+  document.documentElement.classList.toggle('hdr-hide', mqPhone.matches && y > 140 && y > lastY && !hbar.classList.contains('open'));
+  lastY = y;
+}, { passive: true });
+$('#fabMenu').onclick = () => { document.documentElement.classList.remove('hdr-hide'); lastY = scrollY; if (!hbar.classList.contains('open')) $('#burger').click(); };
+$('#fabCart').onclick = () => $('#cartBtn').click();
+
+/* Жидкое стекло: преломление фона по краям. Карта смещения растягивается на кнопку целиком.
+   url() в backdrop-filter понимает только Chromium, остальным оставляем обычное стекло. */
+if (/Chrome\//.test(navigator.userAgent)) {
+  document.body.insertAdjacentHTML('beforeend', '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="lglass" x="0" y="0" width="1" height="1" primitiveUnits="objectBoundingBox" color-interpolation-filters="sRGB"><feImage href="img/glass-map.png" x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="map"/><feDisplacementMap in="SourceGraphic" in2="map" scale="0.14" xChannelSelector="R" yChannelSelector="G"/></filter></svg>');
+  document.documentElement.classList.add('refract');
+}
+/* Жидкое стекло: блик на кнопке плывёт за курсором */
+document.addEventListener('pointermove', e => {
+  const b = e.target.closest?.('.btn'); if (!b) return;
+  const r = b.getBoundingClientRect();
+  b.style.setProperty('--mx', (e.clientX - r.left) + 'px'); b.style.setProperty('--my', (e.clientY - r.top) + 'px');
+}, { passive: true });
 
 /* ===== Каталог ===== */
 if (isCatalog) {
@@ -175,18 +213,6 @@ const onScroll = [];
 let ticking = false;
 addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(() => { ticking = false; onScroll.forEach(f => f()); }); } }, { passive: true });
 
-/* Жидкое стекло: преломление фона по краям. Карта смещения растягивается на кнопку целиком.
-   url() в backdrop-filter понимает только Chromium, остальным оставляем обычное стекло. */
-if (/Chrome\//.test(navigator.userAgent)) {
-  document.body.insertAdjacentHTML('beforeend', '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="lglass" x="0" y="0" width="1" height="1" primitiveUnits="objectBoundingBox" color-interpolation-filters="sRGB"><feImage href="img/glass-map.png" x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="map"/><feDisplacementMap in="SourceGraphic" in2="map" scale="0.14" xChannelSelector="R" yChannelSelector="G"/></filter></svg>');
-  document.documentElement.classList.add('refract');
-}
-/* Жидкое стекло: блик на кнопке плывёт за курсором */
-document.addEventListener('pointermove', e => {
-  const b = e.target.closest?.('.btn'); if (!b) return;
-  const r = b.getBoundingClientRect();
-  b.style.setProperty('--mx', (e.clientX - r.left) + 'px'); b.style.setProperty('--my', (e.clientY - r.top) + 'px');
-}, { passive: true });
 
 /* С главной внутренние страницы открываются в новой вкладке (и меню, и карточки, что дорисовываются позже) */
 if ($('#hero')) document.addEventListener('click', e => {
@@ -201,47 +227,56 @@ if ($('#hero')) document.addEventListener('click', e => {
 if ($('#hero')) {
   const heroEl = $('#hero'), media = $('.hero__media'), hv = $('#heroVideo'), poster = $('#heroPoster'), sun = $('#heroSun');
   const cv = $('#motes'), cx = cv.getContext('2d'), hint = $('#mushHint'), jar = $('#jarHit');
-  const vOpen = $('#heroOpen'), vRest = $('#heroRest');
+  const vOpen = $('#heroOpen'), vRest = $('#heroRest'), endImg = $('#heroEnd');
+  // на телефоне свои ролики: кадр обрезан под вертикальный экран (x 560–1720 из 1920) и ужат до 720 px, они в 3 раза легче
+  const MOB = matchMedia('(max-width: 820px)').matches, DIR = MOB ? 'media/hero/m/' : 'media/hero/';
+  const G = MOB ? { cx: 560, k: 720 / 1160, w: 720, h: 670 } : { cx: 0, k: 1, w: 1920, h: 1080 };
+  const loadOpen = () => { if (!vOpen.src) { vOpen.src = DIR + 'open.mp4'; vOpen.preload = 'auto'; vRest.src = DIR + 'open_rest.mp4'; vRest.preload = 'auto'; } };
   if (!reduce) {
-    hv.src = 'media/hero/leaf.mp4';
+    hv.src = DIR + 'leaf.mp4';
     hv.addEventListener('canplaythrough', () => hv.play().catch(() => {}), { once: true });
-    // ролики банки качаем сразу за фоном, лес ждёт обоих (см. heroReady)
-    const loadOpen = () => { if (!vOpen.src) { vOpen.src = 'media/hero/open.mp4'; vOpen.preload = 'auto'; vRest.src = 'media/hero/open_rest.mp4'; vRest.preload = 'auto'; } };
+    // ролики банки качаем сразу за фоном, лес ждёт их (см. heroReady). iOS заранее видео не грузит, поэтому там ждём недолго
     hv.addEventListener('canplaythrough', loadOpen, { once: true }); setTimeout(loadOpen, 2500);
-    window.heroReady = new Promise(r => { vOpen.addEventListener('canplaythrough', r, { once: true }); setTimeout(r, 5000); });
+    window.heroReady = new Promise(r => { vOpen.addEventListener('canplaythrough', r, { once: true }); setTimeout(r, MOB ? 2500 : 5000); });
   }
   let heroOn = true, inside = false, sx = .72, sy = .32, tsx = .72, tsy = .32, opened = false;
   const live = () => opened ? (vRest.classList.contains('on') ? vRest : vOpen) : hv;
   new IntersectionObserver(([e]) => { heroOn = e.isIntersecting; if (!reduce) heroOn ? live().play().catch(() => {}) : live().pause(); }).observe(heroEl);
   const fine = matchMedia('(pointer: fine)').matches, dpr = Math.min(2, devicePixelRatio || 1);
 
-  // где банка в кадре видео 1920×1080
-  const R = { x: 1215, y: 280, w: 345, h: 590 };
+  // где банка в кадре видео 1920×1080; для телефонного ролика пересчитываем через G
+  const R0 = { x: 1215, y: 280, w: 345, h: 590 };
+  const R = { x: (R0.x - G.cx) * G.k, y: R0.y * G.k, w: R0.w * G.k, h: R0.h * G.k };
   let W, H;
   const layout = () => {
     W = cv.width = heroEl.clientWidth * dpr; H = cv.height = heroEl.clientHeight * dpr;
-    const cw = media.clientWidth, ch = media.clientHeight, s = Math.max(cw / 1920, ch / 1080);
+    const cw = media.clientWidth, ch = media.clientHeight, s = Math.max(cw / G.w, ch / G.h);
     const [px, py] = getComputedStyle(hv).objectPosition.split(' ').map(v => parseFloat(v) / 100);
-    const ox = (cw - 1920 * s) * px, oy = media.offsetTop + (ch - 1080 * s) * py;
+    const ox = (cw - G.w * s) * px, oy = media.offsetTop + (ch - G.h * s) * py;
     Object.assign(jar.style, { left: ox + R.x * s + 'px', top: oy + R.y * s + 'px', width: R.w * s + 'px', height: R.h * s + 'px' });
-    hint.style.left = (ox + (R.x + 30) * s) + "px"; hint.style.top = (oy + (R.y - 120) * s) + "px";
+    hint.style.left = (ox + (R.x + 30 * G.k) * s) + 'px'; hint.style.top = (oy + (R.y - 120 * G.k) * s) + 'px';
   };
   let lastCW = 0, lastCH = 0;
   addEventListener('resize', layout);
 
+  // если видео не заиграло (iOS в энергосбережении запрещает), показываем финальный кадр картинкой
+  const showEnd = () => { if (vOpen.classList.contains('on')) return; endImg.src = DIR + 'open_end.webp'; endImg.onload = () => endImg.classList.add('on'); };
   function openJar() {
     if (opened || reduce) return; opened = true;
     hint.classList.remove('on'); jar.style.cursor = 'default';
-    if (!vOpen.src) { vOpen.src = 'media/hero/open.mp4'; vRest.src = 'media/hero/open_rest.mp4'; vRest.preload = 'auto'; }
+    loadOpen();
     vOpen.currentTime = 0;
     vOpen.addEventListener('playing', () => vOpen.classList.add('on'), { once: true });
-    vOpen.play().catch(() => {});
+    vOpen.play().catch(showEnd);
+    setTimeout(showEnd, 6000);
   }
   vOpen.addEventListener('ended', () => { vRest.currentTime = 0; vRest.play().catch(() => {}); vRest.classList.add('on'); hv.pause(); });
   jar.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') openJar(); });
   jar.addEventListener('click', openJar);
   // подсказку показываем, только когда ролик открытия уже скачан, иначе наведение ничего не даст
-  vOpen.addEventListener('canplaythrough', () => setTimeout(() => { if (!opened && !reduce) hint.classList.add('on'); }, 800), { once: true });
+  const showHint = () => { if (!opened && !reduce) hint.classList.add('on'); };
+  vOpen.addEventListener('canplaythrough', () => setTimeout(showHint, 800), { once: true });
+  if (!fine) setTimeout(showHint, 2600); // на телефоне ролик грузится по тапу, ждать его не нужно
   heroEl.addEventListener('pointermove', e => {
     const hr = heroEl.getBoundingClientRect(); tsx = (e.clientX - hr.left) / hr.width; tsy = (e.clientY - hr.top) / hr.height; inside = true;
   });
@@ -276,7 +311,7 @@ if ($('#hero')) {
 if ($('#about')) {
   const about = $('#about'), lines = $$('.about__line');
   const wide = innerWidth > 820;
-  const forest = new ScrollFrames({ canvas: $('#forestCanvas'), scroller: about, dir: wide ? 'media/forest/w' : 'media/forest/m', meta: { frames: 160, pattern: 'frame_%04d.webp', width: wide ? 1280 : 960, height: wide ? 720 : 540 }, fit: 'cover', mobileStride: 1 });
+  const forest = new ScrollFrames({ canvas: $('#forestCanvas'), scroller: about, dir: wide ? 'media/forest/w' : 'media/forest/m', meta: { frames: 160, pattern: 'frame_%04d.webp', width: wide ? 1280 : 960, height: wide ? 720 : 540 }, fit: 'cover', mobileStride: 2 });
   // лес (12 МБ кадров) начинаем качать, когда первый экран и банка готовы, или раньше, если до леса уже докрутили
   let fStarted = false; const fStart = () => { if (!fStarted) { fStarted = true; forest.start(); } };
   (window.heroReady || Promise.resolve()).then(fStart);
@@ -341,9 +376,22 @@ if ($('#goals') && $('#kit')) {
     const [top, len] = pinPos(), i = Math.min(GOALS.length - 1, Math.floor(clamp(-top / len, 0, .999) * GOALS.length));
     if (i !== cur) { cur = i; pick(i); }
   });
+  // телефон: цели лентой под карточкой; какая цель встала по центру ленты, тот набор и показываем
+  const gl = $('#goals'), phone = () => matchMedia('(max-width: 820px)').matches;
+  let gt, gCur = 0;
+  const centerChip = b => gl.scrollTo({ left: b.offsetLeft - (gl.clientWidth - b.offsetWidth) / 2, behavior: reduce ? 'auto' : 'smooth' });
+  gl.addEventListener('scroll', () => {
+    if (!phone()) return; clearTimeout(gt);
+    gt = setTimeout(() => {
+      const mid = gl.scrollLeft + gl.clientWidth / 2; let best = 0, bd = 1e9;
+      gl.querySelectorAll('.goal').forEach((b, k) => { const d = Math.abs(b.offsetLeft + b.offsetWidth / 2 - mid); if (d < bd) { bd = d; best = k; } });
+      if (best !== gCur) { gCur = best; pick(best); }
+    }, 110);
+  }, { passive: true });
   $('#goals').onclick = e => {
     const b = e.target.closest('.goal'); if (!b) return;
     const i = +b.dataset.i;
+    if (phone()) { gCur = i; pick(i); return centerChip(b); }
     if (!pinOn()) return pick(i);
     const [top, len] = pinPos();
     scrollTo({ top: scrollY + top + len * (i + .5) / GOALS.length, behavior: reduce ? 'auto' : 'smooth' });
