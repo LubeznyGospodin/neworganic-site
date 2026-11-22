@@ -240,7 +240,8 @@ if ($('#hero')) {
   vOpen.addEventListener('ended', () => { vRest.currentTime = 0; vRest.play().catch(() => {}); vRest.classList.add('on'); hv.pause(); });
   jar.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') openJar(); });
   jar.addEventListener('click', openJar);
-  setTimeout(() => { if (!opened && !reduce) hint.classList.add('on'); }, 2600);
+  // подсказку показываем, только когда ролик открытия уже скачан, иначе наведение ничего не даст
+  vOpen.addEventListener('canplaythrough', () => setTimeout(() => { if (!opened && !reduce) hint.classList.add('on'); }, 800), { once: true });
   heroEl.addEventListener('pointermove', e => {
     const hr = heroEl.getBoundingClientRect(); tsx = (e.clientX - hr.left) / hr.width; tsy = (e.clientY - hr.top) / hr.height; inside = true;
   });
