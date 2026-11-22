@@ -5,7 +5,9 @@ const rub = n => n.toLocaleString('ru-RU') + ' ₽';
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const inStock = p => p.stock !== 'Нет в наличии';
-const photo = id => `img/shot2/${String(id).padStart(2, '0')}.webp`;
+// тяжёлые файлы (фото, видео, кадры) отдаёт Selectel S3, у сервера сайта узкий канал; заливка: s3sync.py
+const CDN = 'https://24dcb37f-27c8-4dd8-84f9-6fe3e085d5df.selstorage.ru/neworganic/';
+const photo = id => `${CDN}img/shot2/${String(id).padStart(2, '0')}.webp`;
 const SCENE = { 0: 'ritual', 9: 'cordyceps', 20: 'reishi', 85: 'ashwa' };
 // категории как на текущем сайте, у позиции их может быть несколько
 const CAT = { dobavki: 'Пищевые добавки', ezhovik: 'Ежовик гребенчатый', pamyat: 'Для памяти и концентрации', immunitet: 'Для иммунитета', adaptogeny: 'Адаптогены', vitaminy: 'Витамины и БАДы', griby: 'Сушёные грибы', masla: 'Сыродавленные масла', sorbenty: 'Сорбенты', chay: 'Чай', 'palo-santo': 'Пало санто', naruzhnoe: 'Для наружного применения' };
@@ -62,7 +64,7 @@ $('[data-footer]').outerHTML = `
 /* Карточка товара в сетке */
 const card = (p, big) => `
   <article class="pcard${inStock(p) ? '' : ' out'}" data-reveal>
-    <button class="pcard__img" type="button" data-open="${p.id}" aria-label="${p.name}, подробнее"><img src="${photo(p.id)}" alt="${p.name}, ${p.sub}" loading="lazy">${big && SCENE[p.id] ? `<img src="img/scene/s/${SCENE[p.id]}.webp" srcset="img/scene/s/${SCENE[p.id]}.webp 760w, img/scene/${SCENE[p.id]}.webp 1450w" sizes="(max-width: 820px) 100vw, 34vw" alt="" loading="lazy">` : ''}</button>
+    <button class="pcard__img" type="button" data-open="${p.id}" aria-label="${p.name}, подробнее"><img src="${photo(p.id)}" alt="${p.name}, ${p.sub}" loading="lazy">${big && SCENE[p.id] ? `<img src="${CDN}img/scene/s/${SCENE[p.id]}.webp" srcset="${CDN}img/scene/s/${SCENE[p.id]}.webp 760w, ${CDN}img/scene/${SCENE[p.id]}.webp 1450w" sizes="(max-width: 820px) 100vw, 34vw" alt="" loading="lazy">` : ''}</button>
     <div class="pcard__meta"><div><div class="pcard__name">${p.name}</div><div class="pcard__for">${big ? FOR[p.goals[0]] || p.sub : p.sub}</div></div><div class="pcard__price">${rub(p.price)}</div></div>
     <div class="pcard__actions"><span class="pcard__stock" style="--sc:${STOCK[p.stock] || '#3d5444'}">${inStock(p) ? 'В наличии' : 'Нет в наличии'}</span><button class="addtext" type="button" data-add="${p.id}" ${inStock(p) ? '' : 'disabled'}>${inStock(p) ? 'В корзину' : 'Ожидаем'}</button></div>
   </article>`;
@@ -143,12 +145,12 @@ $$('.hbar__nav a').forEach(a => a.addEventListener('click', () => hbar.classList
 const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .12, rootMargin: '0px 0px -6% 0px' });
 const reveal = () => $$('[data-reveal]:not(.in)').forEach(el => io.observe(el));
 
-/* Телефон: шапка уезжает вверх, пока листаете вниз, и возвращается при прокрутке вверх.
+/* Телефон (и каталог на компьютере): шапка уезжает вверх, пока листаете вниз, и возвращается при прокрутке вверх.
    Вместо неё внизу справа плавает стеклянная капсула с меню и корзиной, место под контент освобождается */
 const mqPhone = matchMedia('(max-width: 820px)'); let lastY = scrollY;
 addEventListener('scroll', () => {
   const y = scrollY; if (Math.abs(y - lastY) < 8) return;
-  document.documentElement.classList.toggle('hdr-hide', mqPhone.matches && y > 140 && y > lastY && !hbar.classList.contains('open'));
+  document.documentElement.classList.toggle('hdr-hide', (mqPhone.matches || isCatalog) && y > 140 && y > lastY && !hbar.classList.contains('open'));
   lastY = y;
 }, { passive: true });
 $('#fabMenu').onclick = () => { document.documentElement.classList.remove('hdr-hide'); lastY = scrollY; if (!hbar.classList.contains('open')) $('#burger').click(); };
@@ -229,7 +231,7 @@ if ($('#hero')) {
   const cv = $('#motes'), cx = cv.getContext('2d'), hint = $('#mushHint'), jar = $('#jarHit');
   const vOpen = $('#heroOpen'), vRest = $('#heroRest'), endImg = $('#heroEnd');
   // на телефоне свои ролики: кадр обрезан под вертикальный экран (x 560–1720 из 1920) и ужат до 720 px, они в 3 раза легче
-  const MOB = matchMedia('(max-width: 820px)').matches, DIR = MOB ? 'media/hero/m/' : 'media/hero/';
+  const MOB = matchMedia('(max-width: 820px)').matches, DIR = CDN + (MOB ? 'media/hero/m/' : 'media/hero/');
   const G = MOB ? { cx: 560, k: 720 / 1160, w: 720, h: 670 } : { cx: 0, k: 1, w: 1920, h: 1080 };
   const track = window.preTrack || (x => x);
   // ролики качаем целиком в память, пока висит прелоадер: к наведению банка уже готова, и на iPhone тоже (iOS сама видео заранее не грузит)
@@ -314,7 +316,7 @@ if ($('#hero')) {
 if ($('#about')) {
   const about = $('#about'), lines = $$('.about__line');
   const wide = innerWidth > 820;
-  const forest = new ScrollFrames({ canvas: $('#forestCanvas'), scroller: about, dir: wide ? 'media/forest/w' : 'media/forest/m', meta: { frames: 160, pattern: 'frame_%04d.webp', width: wide ? 1280 : 960, height: wide ? 720 : 540 }, fit: 'cover', mobileStride: 2 });
+  const forest = new ScrollFrames({ canvas: $('#forestCanvas'), scroller: about, dir: CDN + (wide ? 'media/forest/w' : 'media/forest/m'), meta: { frames: 160, pattern: 'frame_%04d.webp', width: wide ? 1280 : 960, height: wide ? 720 : 540 }, fit: 'cover', mobileStride: 2 });
   // лес стартует сразу: прелоадер ждёт первый проход (каждый восьмой кадр), остальные догружаются следом
   forest.start(); (window.preTrack || (x => x))(forest.coarse);
   let ln = -1;
