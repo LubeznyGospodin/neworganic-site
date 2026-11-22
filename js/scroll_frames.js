@@ -86,7 +86,11 @@
     if (this.images[slot]) { if (done) done(this.images[slot]); return; }
     var img = new Image();
     img.decoding = 'async';
-    img.onload = function () { self.images[slot] = img; if (done) done(img); };
+    img.onload = function () {
+      // Распаковываем заранее, иначе браузер декодирует кадр прямо во время прокрутки и она дёргается
+      var ready = function () { self.images[slot] = img; if (done) done(img); };
+      img.decode ? img.decode().then(ready, ready) : ready();
+    };
     img.onerror = function () { if (done) done(null); };
     img.src = this.frameURL(this.indices[slot]);
   };
@@ -219,14 +223,20 @@
   };
 
   ScrollFrames.prototype.onScroll = function () {
+    var last = this.indices.length - 1;
+    this.target = Math.min(last, this.curve(this.progress()) * last);
+    if (this.pos == null) this.pos = this.target;
     if (this.raf) return;
     var self = this;
-    this.raf = requestAnimationFrame(function () {
-      self.raf = 0;
-      var last = self.indices.length - 1;
-      var slot = Math.min(last, Math.round(self.curve(self.progress()) * last));
+    // Колесо мыши двигает страницу рывками; кадр догоняет цель за несколько кадров экрана
+    var step = function () {
+      var d = self.target - self.pos;
+      self.pos = Math.abs(d) < .35 ? self.target : self.pos + d * .22;
+      var slot = Math.round(self.pos);
       if (slot !== self.current || self.drawn !== self.nearestLoaded(slot)) self.draw(slot);
-    });
+      self.raf = self.pos === self.target ? 0 : requestAnimationFrame(step);
+    };
+    this.raf = requestAnimationFrame(step);
   };
 
   ScrollFrames.prototype.onResize = function () {

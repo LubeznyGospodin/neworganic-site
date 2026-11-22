@@ -205,7 +205,10 @@ if ($('#hero')) {
   if (!reduce) {
     hv.src = 'media/hero/leaf.mp4';
     hv.addEventListener('canplaythrough', () => hv.play().catch(() => {}), { once: true });
-    addEventListener('load', () => setTimeout(() => { vOpen.src = 'media/hero/open.mp4'; vOpen.preload = 'auto'; vRest.src = 'media/hero/open_rest.mp4'; vRest.preload = 'auto'; }, 1500), { once: true });
+    // ролики банки качаем сразу за фоном, лес ждёт обоих (см. heroReady)
+    const loadOpen = () => { if (!vOpen.src) { vOpen.src = 'media/hero/open.mp4'; vOpen.preload = 'auto'; vRest.src = 'media/hero/open_rest.mp4'; vRest.preload = 'auto'; } };
+    hv.addEventListener('canplaythrough', loadOpen, { once: true }); setTimeout(loadOpen, 2500);
+    window.heroReady = new Promise(r => { vOpen.addEventListener('canplaythrough', r, { once: true }); setTimeout(r, 5000); });
   }
   let heroOn = true, inside = false, sx = .72, sy = .32, tsx = .72, tsy = .32, opened = false;
   const live = () => opened ? (vRest.classList.contains('on') ? vRest : vOpen) : hv;
@@ -273,7 +276,11 @@ if ($('#about')) {
   const about = $('#about'), lines = $$('.about__line');
   const wide = innerWidth > 820;
   const forest = new ScrollFrames({ canvas: $('#forestCanvas'), scroller: about, dir: wide ? 'media/forest/w' : 'media/forest/m', meta: { frames: 160, pattern: 'frame_%04d.webp', width: wide ? 1280 : 960, height: wide ? 720 : 540 }, fit: 'cover', mobileStride: 1 });
-  new IntersectionObserver(([e], o) => { if (e.isIntersecting) { forest.start(); o.disconnect(); } }, { rootMargin: '800px 0px' }).observe(about);
+  // лес (12 МБ кадров) начинаем качать, когда первый экран и банка готовы, или раньше, если до леса уже докрутили
+  let fStarted = false; const fStart = () => { if (!fStarted) { fStarted = true; forest.start(); } };
+  (window.heroReady || Promise.resolve()).then(fStart);
+  // блок стоит вплотную под первым экраном, поэтому «рядом» считаем только после настоящей прокрутки
+  onScroll.push(() => { if (!fStarted && scrollY > 40 && about.getBoundingClientRect().top < innerHeight * 1.5) fStart(); });
   let ln = -1;
   onScroll.push(() => {
     const p = clamp(-about.getBoundingClientRect().top / (about.offsetHeight - innerHeight), 0, 1);
