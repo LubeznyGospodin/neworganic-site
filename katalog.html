@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Каталог · New Organic</title>
+<meta name="description" content="Ежовик, кордицепс, рейши, ашваганда, витамины и детокс. Отправка за 48 часов, доставка бесплатно от 4 000 ₽.">
+<link rel="icon" href="img/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=11">
+</head>
+<body>
+<a class="sr" href="#main">К содержанию</a>
+<div data-header></div>
+
+<main id="main" class="page">
+  <div class="wrap">
+    <div class="label">Каталог</div>
+    <h1>Грибы, травы и витамины</h1>
+    <p class="page__lead">Не знаете, с чего начать? <a href="podbor.html">Подберите курс по цели</a>, и куратор поможет со схемой.</p>
+
+    <div class="fbar" id="fbar">
+      <div class="fbar__row">
+        <label class="fsearch"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="6"/><path d="m14 14 4 4"/></svg><input id="q" type="search" placeholder="Поиск" aria-label="Поиск по каталогу"></label>
+        <div class="fchips" id="cats"></div>
+        <div class="fbar__end"><span class="fcount" id="count" aria-live="polite"></span><button class="freset" type="button" id="reset" hidden>Сбросить</button><button class="ftoggle" type="button" id="ftoggle" aria-expanded="false" aria-controls="fmore">Фильтры<i aria-hidden="true"></i></button></div>
+      </div>
+      <div class="fmore" id="fmore"><div class="fmore__in">
+        <div class="fgroup"><div class="fgroup__t">Цель</div><div class="fchips" id="goals"></div></div>
+        <div class="fgroup"><div class="fgroup__t">Порядок</div><div class="fchips" id="sort"></div></div>
+        <div class="fgroup"><div class="fgroup__t">Наличие</div><label class="switch"><input type="checkbox" id="stockOnly"><span></span>Только в наличии</label></div>
+      </div></div>
+    </div>
+    <div class="grid" id="catalogGrid"></div>
+  </div>
+</main>
+
+<div data-footer></div>
+<script src="js/data.js?v=11"></script>
+<script src="js/app.js?v=11"></script>
+</body>
+</html>
