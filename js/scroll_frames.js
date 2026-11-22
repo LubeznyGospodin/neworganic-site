@@ -41,6 +41,8 @@
     this.raf = 0;
     this.reduced = global.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    var self0 = this;
+    this.coarse = new Promise(function (r) { self0._coarseDone = r; });
     this.onScroll = this.onScroll.bind(this);
     this.onResize = this.onResize.bind(this);
   }
@@ -65,7 +67,7 @@
     var self = this;
     this.load(0, function () { self.draw(0); });
 
-    if (this.reduced) return;
+    if (this.reduced) { this._coarseDone(); return; }
 
     global.addEventListener('scroll', this.onScroll, { passive: true });
     global.addEventListener('resize', this.onResize, { passive: true });
@@ -103,6 +105,7 @@
     var si = 0;
 
     function pass() {
+      if (si >= 1) self._coarseDone();
       if (si >= steps.length) return;
       var step = steps[si++];
       var queue = [];

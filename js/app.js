@@ -231,13 +231,17 @@ if ($('#hero')) {
   // на телефоне свои ролики: кадр обрезан под вертикальный экран (x 560–1720 из 1920) и ужат до 720 px, они в 3 раза легче
   const MOB = matchMedia('(max-width: 820px)').matches, DIR = MOB ? 'media/hero/m/' : 'media/hero/';
   const G = MOB ? { cx: 560, k: 720 / 1160, w: 720, h: 670 } : { cx: 0, k: 1, w: 1920, h: 1080 };
-  const loadOpen = () => { if (!vOpen.src) { vOpen.src = DIR + 'open.mp4'; vOpen.preload = 'auto'; vRest.src = DIR + 'open_rest.mp4'; vRest.preload = 'auto'; } };
+  const track = window.preTrack || (x => x);
+  // ролики качаем целиком в память, пока висит прелоадер: к наведению банка уже готова, и на iPhone тоже (iOS сама видео заранее не грузит)
+  const blob = u => fetch(u).then(r => { if (!r.ok) throw 0; return r.blob(); }).then(b => URL.createObjectURL(b)).catch(() => u);
+  const loadOpen = () => { if (!vOpen.src) { vOpen.src = DIR + 'open.mp4'; vRest.src = DIR + 'open_rest.mp4'; } };
+  let openReady = Promise.resolve();
   if (!reduce) {
-    hv.src = DIR + 'leaf.mp4';
-    hv.addEventListener('canplaythrough', () => hv.play().catch(() => {}), { once: true });
-    // ролики банки качаем сразу за фоном, лес ждёт их (см. heroReady). iOS заранее видео не грузит, поэтому там ждём недолго
-    hv.addEventListener('canplaythrough', loadOpen, { once: true }); setTimeout(loadOpen, 2500);
-    window.heroReady = new Promise(r => { vOpen.addEventListener('canplaythrough', r, { once: true }); setTimeout(r, MOB ? 2500 : 5000); });
+    track(blob(DIR + 'leaf.mp4').then(u => new Promise(r => { hv.src = u; hv.addEventListener('canplay', () => { hv.play().catch(() => {}); r(); }, { once: true }); setTimeout(r, 4000); })));
+    openReady = Promise.all([
+      track(blob(DIR + 'open.mp4').then(u => { if (!vOpen.src) vOpen.src = u; })),
+      track(blob(DIR + 'open_rest.mp4').then(u => { if (!vRest.src) vRest.src = u; })),
+    ]);
   }
   let heroOn = true, inside = false, sx = .72, sy = .32, tsx = .72, tsy = .32, opened = false;
   const live = () => opened ? (vRest.classList.contains('on') ? vRest : vOpen) : hv;
@@ -275,8 +279,7 @@ if ($('#hero')) {
   jar.addEventListener('click', openJar);
   // подсказку показываем, только когда ролик открытия уже скачан, иначе наведение ничего не даст
   const showHint = () => { if (!opened && !reduce) hint.classList.add('on'); };
-  vOpen.addEventListener('canplaythrough', () => setTimeout(showHint, 800), { once: true });
-  if (!fine) setTimeout(showHint, 2600); // на телефоне ролик грузится по тапу, ждать его не нужно
+  openReady.then(() => setTimeout(showHint, 2200));
   heroEl.addEventListener('pointermove', e => {
     const hr = heroEl.getBoundingClientRect(); tsx = (e.clientX - hr.left) / hr.width; tsy = (e.clientY - hr.top) / hr.height; inside = true;
   });
@@ -312,11 +315,8 @@ if ($('#about')) {
   const about = $('#about'), lines = $$('.about__line');
   const wide = innerWidth > 820;
   const forest = new ScrollFrames({ canvas: $('#forestCanvas'), scroller: about, dir: wide ? 'media/forest/w' : 'media/forest/m', meta: { frames: 160, pattern: 'frame_%04d.webp', width: wide ? 1280 : 960, height: wide ? 720 : 540 }, fit: 'cover', mobileStride: 2 });
-  // лес (12 МБ кадров) начинаем качать, когда первый экран и банка готовы, или раньше, если до леса уже докрутили
-  let fStarted = false; const fStart = () => { if (!fStarted) { fStarted = true; forest.start(); } };
-  (window.heroReady || Promise.resolve()).then(fStart);
-  // блок стоит вплотную под первым экраном, поэтому «рядом» считаем только после настоящей прокрутки
-  onScroll.push(() => { if (!fStarted && scrollY > 40 && about.getBoundingClientRect().top < innerHeight * 1.5) fStart(); });
+  // лес стартует сразу: прелоадер ждёт первый проход (каждый восьмой кадр), остальные догружаются следом
+  forest.start(); (window.preTrack || (x => x))(forest.coarse);
   let ln = -1;
   onScroll.push(() => {
     const p = clamp(-about.getBoundingClientRect().top / (about.offsetHeight - innerHeight), 0, 1);
@@ -328,6 +328,7 @@ if ($('#about')) {
 
 /* Хиты */
 if ($('#trio')) $('#trio').innerHTML = [0, 9, 20].map(id => card(byId(id), true)).join('');
+if ($('#trio')) $$('#trio img').forEach(im => { im.loading = 'eager'; im.fetchPriority = 'high'; (window.preTrack || (x => x))(im.decode().catch(() => {})); });
 
 /* История: фото слева меняется по шагам справа */
 if ($('#story')) {
@@ -422,4 +423,6 @@ if ($('#quote')) {
 
 onScroll.forEach(f => f());
 reveal();
+// всё, что нужно первым экранам, уже записано в прелоадер
+if (window.preSeal) preSeal();
 })();
